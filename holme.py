@@ -112,21 +112,57 @@ def attribute_similarity(G, u, v):
 # Candidate Filtering
 # ------------------------------
 def get_candidates(G, user):
+
+    candidates = set()
+
+    # ------------------------------------------
+    # 1. Friends-of-friends with mutual friends
+    # ------------------------------------------
     neighbors = set(G.neighbors(user))
 
-    # Friends-of-friends
     fof = set()
     for f in neighbors:
         fof.update(G.neighbors(f))
-
-    # Remove direct friends + self
     fof -= neighbors
     fof.discard(user)
 
-    # Require at least 1 mutual friend
-    final = [x for x in fof if mutual_friends(G, user, x) >= 1]
-    return final
+    fof_filtered = [x for x in fof if mutual_friends(G, user, x) >= 1]
+    candidates.update(fof_filtered)
 
+
+    # ------------------------------------------
+    # 2. Same community (strong structural tie)
+    # ------------------------------------------
+    user_comm = G.nodes[user]["community"]
+    same_comm = [x for x in G.nodes() if G.nodes[x]["community"] == user_comm]
+    candidates.update(same_comm)
+
+
+    # ------------------------------------------
+    # 3. Same location cluster (spatial homophily)
+    # ------------------------------------------
+    ux, uy = G.nodes[user]["location"]["x"], G.nodes[user]["location"]["y"]
+
+    def close(u, v, radius=15):
+        dx = u["location"]["x"] - v["location"]["x"]
+        dy = u["location"]["y"] - v["location"]["y"]
+        dist = (dx*dx + dy*dy)**0.5
+        return dist <= radius
+
+    same_location = [
+        x for x in G.nodes()
+        if x != user and close(G.nodes[x], G.nodes[user])
+    ]
+    candidates.update(same_location)
+
+
+    # ------------------------------------------
+    # Final cleanup: remove direct friends + self
+    # ------------------------------------------
+    candidates.discard(user)
+    candidates -= neighbors
+
+    return list(candidates)
 
 
 # ------------------------------
