@@ -80,6 +80,30 @@ class ManualSocialAnalyzer:
         print("Community detection converged.")
         return labels
 
+    # --- HELPER FUNCTIONS FOR CANDIDATE FILTERING ---
+    def mutual_friends(self, user1, user2):
+        """Count mutual friends between two users"""
+        friends1 = set(self.G.neighbors(user1))
+        friends2 = set(self.G.neighbors(user2))
+        return len(friends1.intersection(friends2))
+    
+    def get_candidates(self, user):
+        """Get candidate recommendations using friends-of-friends approach"""
+        neighbors = set(self.G.neighbors(user))
+
+        # Friends-of-friends
+        fof = set()
+        for f in neighbors:
+            fof.update(self.G.neighbors(f))
+
+        # Remove direct friends + self
+        fof -= neighbors
+        fof.discard(user)
+
+        # Require at least 1 mutual friend
+        final = [x for x in fof if self.mutual_friends(user, x) >= 1]
+        return final
+
     # --- 4. FULL FEATURE RECOMMENDER (OPTIMIZED) ---
     def recommend_friends_advanced(self, user_id):
         print(f"\n--- 4. ADVANCED LINK PREDICTION FOR {self.G.nodes[user_id]['name']} ---")
@@ -92,16 +116,10 @@ class ManualSocialAnalyzer:
         target_friends = set(self.G.neighbors(user_id))
         
         # --- OPTIMIZATION: CANDIDATE GENERATION (Friends-of-Friends) ---
-        # Instead of checking the whole world, we only check people connected to us.
-        candidates_pool = set()
-        for f in target_friends:
-            candidates_pool.update(self.G.neighbors(f))
-            
-        # Remove self and existing friends from the pool
-        candidates_pool.discard(user_id)
-        candidates_pool -= target_friends
+        # Use the cleaner get_candidates function
+        candidates_pool = self.get_candidates(user_id)
         
-        print(f"-> Narrowed down from {len(self.G.nodes())} total users to {len(candidates_pool)} candidates (Friends-of-Friends).")
+        print(f"-> Narrowed down from {len(self.G.nodes())} total users to {len(candidates_pool)} candidates (Friends-of-Friends with ≥1 mutual friend).")
 
         candidates = []
         
