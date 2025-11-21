@@ -2,7 +2,7 @@ import networkx as nx
 import random
 import math
 from collections import deque, Counter
-from generate import RealisticSocialGraph
+# from generate import RealisticSocialGraph  # Import moved to __main__
 
 class ManualSocialAnalyzer:
     def __init__(self, graph):
@@ -103,9 +103,65 @@ class ManualSocialAnalyzer:
         # Require at least 1 mutual friend
         final = [x for x in fof if self.mutual_friends(user, x) >= 1]
         return final
+    
+    # --- MODULAR FEATURE EXTRACTION (HOLME.PY STYLE) ---
+    def jaccard_coefficient(self, user1, user2):
+        """Calculate Jaccard coefficient between two users"""
+        return list(nx.jaccard_coefficient(self.G, [(user1, user2)]))[0][2]
+    
+    def adamic_adar_score(self, user1, user2):
+        """Calculate Adamic-Adar score using NetworkX"""
+        return list(nx.adamic_adar_index(self.G, [(user1, user2)]))[0][2]
+    
+    def attribute_similarity(self, user1, user2):
+        """Calculate attribute-based similarity (age, location, tags, affiliation)"""
+        u1 = self.G.nodes[user1]
+        u2 = self.G.nodes[user2]
+        score = 0
+        
+        # Age similarity
+        age_diff = abs(u1['age'] - u2['age'])
+        score += max(0, 20 - age_diff) / 20
+        
+        # Affiliation match
+        if u1.get('affiliation') == u2.get('affiliation'):
+            score += 1
+        
+        # Tags overlap
+        overlap = len(set(u1['tags']) & set(u2['tags']))
+        score += overlap * 0.6
+        
+        # Location proximity
+        dist = math.sqrt((u1['location']['x'] - u2['location']['x'])**2 + 
+                        (u1['location']['y'] - u2['location']['y'])**2)
+        score += max(0, (100 - dist) / 100)
+        
+        return score
+    
+    def score_candidate(self, user_id, candidate_id):
+        """Calculate total score and feature breakdown for a candidate"""
+        features = {}
+        
+        # Structural features
+        features['mutual_friends'] = 2.5 * self.mutual_friends(user_id, candidate_id)
+        features['jaccard'] = 1.0 * self.jaccard_coefficient(user_id, candidate_id)
+        features['adamic_adar'] = 1.2 * self.adamic_adar_score(user_id, candidate_id)
+        
+        # Community feature
+        same_comm = 1 if self.node_communities.get(user_id) == self.node_communities.get(candidate_id) else 0
+        features['same_community'] = 1.5 * same_comm
+        
+        # Attribute similarity
+        features['attribute_similarity'] = 1.5 * self.attribute_similarity(user_id, candidate_id)
+        
+        # PageRank boost
+        features['pagerank_boost'] = 1.0 * (self.pagerank_scores.get(candidate_id, 0) * 10)
+        
+        total_score = sum(features.values())
+        return total_score, features
 
-    # --- 4. FULL FEATURE RECOMMENDER (OPTIMIZED) ---
-    def recommend_friends_advanced(self, user_id):
+    # --- 4. FULL FEATURE RECOMMENDER (OPTIMIZED & MODULAR) ---
+    def recommend_friends_advanced(self, user_id, top_k=3, explain=False):
         print(f"\n--- 4. ADVANCED LINK PREDICTION FOR {self.G.nodes[user_id]['name']} ---")
         
         # Ensure prerequisites
@@ -113,85 +169,62 @@ class ManualSocialAnalyzer:
         if not self.pagerank_scores: self.calculate_pagerank()
         
         target = self.G.nodes[user_id]
-        target_friends = set(self.G.neighbors(user_id))
         
-        # --- OPTIMIZATION: CANDIDATE GENERATION (Friends-of-Friends) ---
-        # Use the cleaner get_candidates function
+        # --- CANDIDATE GENERATION ---
         candidates_pool = self.get_candidates(user_id)
         
         print(f"-> Narrowed down from {len(self.G.nodes())} total users to {len(candidates_pool)} candidates (Friends-of-Friends with ≥1 mutual friend).")
 
-        candidates = []
+        # --- SCORE ALL CANDIDATES ---
+        scored_candidates = []
         
         for candidate_id in candidates_pool:
-            cand = self.G.nodes[candidate_id]
-            candidate_friends = set(self.G.neighbors(candidate_id))
+            total_score, features = self.score_candidate(user_id, candidate_id)
             
-            # 1. Structural (Adamic-Adar)
-            common_neighbors = target_friends.intersection(candidate_friends)
-            adamic = 0
-            for common in common_neighbors:
-                deg = len(list(self.G.neighbors(common)))
-                if deg > 1: adamic += 1 / math.log(deg)
-
-            # 2. Community
-            same_comm = 1 if self.node_communities.get(user_id) == self.node_communities.get(candidate_id) else 0
-
-            # 3. Content (Tags)
-            t_tags = set(target['tags'])
-            c_tags = set(cand['tags'])
-            tag_match = len(t_tags.intersection(c_tags))
-
-            # 4. Preferential Attachment
-            pref_attach = len(target_friends) * len(candidate_friends)
-
-            # 5. PageRank Boost
-            pr_boost = self.pagerank_scores.get(candidate_id, 0) * 10
-
-            # 6. Age Similarity
-            age_diff = abs(target['age'] - cand['age'])
-            age_score = 1.0 / (1.0 + age_diff)
-
-            # 7. Geographic Proximity
-            dist = math.sqrt((target['location']['x'] - cand['location']['x'])**2 + 
-                             (target['location']['y'] - cand['location']['y'])**2)
-            geo_score = 1.0 / (1.0 + (dist * 0.1))
-
-            # --- WEIGHTED FORMULA ---
-            total_score = (
-                (adamic * 1.5) +        # Structural
-                (same_comm * 2.0) +     # Community
-                (tag_match * 1.0) +     # Interests
-                (age_score * 0.8) +     # Demographics
-                (geo_score * 0.8) +     # Location
-                (pr_boost * 1.0) +      # Status
-                (pref_attach * 0.001)   # Degree
-            )
-
-            candidates.append({
-                'name': cand['name'],
+            scored_candidates.append({
+                'id': candidate_id,
+                'name': self.G.nodes[candidate_id]['name'],
                 'score': total_score,
-                'reasons': {
-                    'Comm': bool(same_comm),
-                    'Tags': tag_match,
-                    'AgeDiff': age_diff,
-                    'Dist': round(dist, 1)
-                }
+                'features': features,
+                'profile': self.G.nodes[candidate_id]
             })
 
-        candidates.sort(key=lambda x: x['score'], reverse=True)
+        # Sort by score
+        scored_candidates.sort(key=lambda x: x['score'], reverse=True)
         
-        print(f"User Profile: Age {target['age']}, Loc ({target['location']['x']}, {target['location']['y']})")
-        print("Top 3 Recommendations:")
-        if not candidates:
+        # --- DISPLAY RESULTS ---
+        print(f"\nUser Profile: {target['name']}, Age {target['age']}, {target.get('affiliation', 'N/A')}")
+        print(f"Location: ({target['location']['x']}, {target['location']['y']}), Interests: {target['tags']}")
+        print(f"\nTop {top_k} Recommendations:")
+        
+        if not scored_candidates:
             print("  No recommendations found (User has no friends-of-friends).")
-        for i, res in enumerate(candidates[:3], 1):
-            print(f"  #{i}: {res['name']} (Score: {res['score']:.2f})")
-            print(f"      Stats: {res['reasons']}")
+        else:
+            for i, rec in enumerate(scored_candidates[:top_k], 1):
+                print(f"\n  #{i}: {rec['name']} (Total Score: {rec['score']:.2f})")
+                
+                if explain:
+                    print(f"      Profile: Age {rec['profile']['age']}, {rec['profile'].get('affiliation', 'N/A')}")
+                    print(f"      Tags: {rec['profile']['tags']}")
+                    print(f"      Feature Breakdown:")
+                    for feature, value in rec['features'].items():
+                        print(f"        - {feature:25s}: {value:.3f}")
+        
+        return scored_candidates[:top_k]
 
 if __name__ == "__main__":
+    # Import here to avoid circular dependency
+    import sys
+    sys.path.append('..')
+    from generate import RealisticSocialGraph
+    
     gen = RealisticSocialGraph(n_users=100)
     G = gen.generate()
     
     analyzer = ManualSocialAnalyzer(G)
-    analyzer.recommend_friends_advanced(user_id=0)
+    
+    # Test with explanation enabled
+    print("\n" + "="*70)
+    print("TESTING WITH DETAILED EXPLANATIONS")
+    print("="*70)
+    analyzer.recommend_friends_advanced(user_id=0, top_k=5, explain=True)
