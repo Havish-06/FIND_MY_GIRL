@@ -204,6 +204,8 @@ def find_connected_components_union_find(graph: Graph) -> List[List[Any]]:
     
     Time Complexity: O(E * α(V)) where E is edges, V is vertices, α is inverse Ackermann
     Space Complexity: O(V)
+
+    use union-find to group nodes into connected components by processing all edges.
     """
     uf = UnionFind()
     
@@ -241,6 +243,9 @@ def detect_cycle_union_find(graph: Graph) -> bool:
     
     Time Complexity: O(E * α(V)) where E is edges, V is vertices
     Space Complexity: O(V)
+
+    iterate the edges of the graph and use union-find to detect cycles.
+    if two nodes of an edge are already connected, a cycle is detected.
     """
     uf = UnionFind()
     

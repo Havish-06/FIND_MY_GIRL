@@ -1,4 +1,4 @@
-"""
+    """
 Comprehensive Benchmarking Suite with Scalability Analysis
 ===========================================================
 Tests all algorithms across multiple network sizes and generates performance plots.
