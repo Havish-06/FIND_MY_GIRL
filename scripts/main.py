@@ -7,11 +7,6 @@ Comprehensive analysis of Facebook-like social networks with:
 - Community detection
 - Friend recommendations
 - Visualization
-
-All algorithms implemented from scratch without NetworkX.
-
-Author: AAD Project Group
-Date: December 2025
 """
 
 import random

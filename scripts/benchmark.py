@@ -2,9 +2,6 @@
 Comprehensive Benchmarking Suite with Scalability Analysis
 ===========================================================
 Tests all algorithms across multiple network sizes and generates performance plots.
-
-Author: AAD Project Group
-Date: December 2025
 """
 
 import time
