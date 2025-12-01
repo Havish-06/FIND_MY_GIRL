@@ -1,0 +1,5 @@
+# Social Network Analysis - Python Dependencies
+# Only matplotlib is required for visualization
+# All graph algorithms are implemented from scratch
+
+matplotlib>=3.5.0
