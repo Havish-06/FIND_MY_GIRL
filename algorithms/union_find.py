@@ -3,9 +3,6 @@ Union-Find (Disjoint Set Union) Data Structure
 ===============================================
 Implementation of Union-Find with path compression and union by rank optimizations.
 Used for efficient connected components detection and cycle detection.
-
-Author: AAD Project Group
-Date: December 2025
 """
 
 from typing import Any, Dict, List, Set

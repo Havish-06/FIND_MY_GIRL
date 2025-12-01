@@ -3,9 +3,6 @@ Centrality Measures - From Scratch Implementation
 ==================================================
 Implementation of degree, betweenness, and PageRank centrality measures
 without using NetworkX or any external graph libraries.
-
-Author: AAD Project Group
-Date: December 2025
 """
 
 from collections import defaultdict, deque

@@ -3,9 +3,6 @@ Graph Traversal Algorithms
 ===========================
 Implementation of BFS and DFS for graph traversal and connected components analysis.
 All algorithms are implemented from scratch without using external graph libraries.
-
-Author: AAD Project Group
-Date: December 2025
 """
 
 from collections import deque

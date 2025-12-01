@@ -1,16 +1,11 @@
 """
 Realistic Social Network Generator with Holme-Kim Model
-========================================================
 Generate Facebook-like friendship graphs with:
 - Holme-Kim algorithm (preferential attachment + triangle formation)
 - Multiple disjoint communities (like separate cities)
 - Isolated island nodes (minimal connections)
 - Homophily-based personality tags and interests
 
-All generation is done from scratch without external graph libraries.
-
-Author: AAD Project Group
-Date: December 2025
 """
 
 import random
@@ -71,12 +66,12 @@ class RealisticSocialGraph:
         self.island_ratio = island_ratio
         self.graph = None
         
-    def _generate_holme_kim_scratch(self, start_node: int, num_nodes: int,
+    def _generate_holme_kim(self, start_node: int, num_nodes: int,
                                    community_id: int, 
                                    community_interests: List[str],
                                    community_personality: List[str]) -> None:
         """
-        Generate a Holme-Kim subgraph from scratch (no NetworkX).
+        Generate a Holme-Kim subgraph .
         
         Holme-Kim Algorithm:
         1. Start with m+1 fully connected nodes
@@ -266,7 +261,7 @@ class RealisticSocialGraph:
             comm_interests, comm_personality = community_traits[comm_id]
             
             # Generate Holme-Kim subgraph for this community
-            self._generate_holme_kim_scratch(current_node, comm_size, comm_id,
+            self._generate_holme_kim(current_node, comm_size, comm_id,
                                            comm_interests, comm_personality)
             
             current_node += comm_size

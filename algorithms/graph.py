@@ -4,8 +4,6 @@ Graph Data Structure Implementation
 A from-scratch implementation of an undirected graph using adjacency list representation.
 No external graph libraries (like NetworkX) are used.
 
-Author: AAD Project Group
-Date: December 2025
 """
 
 from collections import defaultdict, deque
