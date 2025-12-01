@@ -2,10 +2,6 @@
 Graph Visualization Module
 ===========================
 Visualize social networks, communities, and analysis results.
-Uses matplotlib for plotting (no NetworkX visualization).
-
-Author: AAD Project Group
-Date: December 2025
 """
 
 import math

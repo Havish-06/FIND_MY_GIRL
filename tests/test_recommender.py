@@ -1,12 +1,8 @@
 """
 Friend Recommendation System
-=============================
 Implement a friend recommendation system for social networks from scratch.
 Uses multiple strategies: common friends, personality similarity, and interest matching.
 Leverages existing implementations from centrality.py, community_detection.py, and traversal.py.
-
-Author: AAD Project Group
-Date: December 2025
 """
 
 from typing import List, Dict, Tuple, Any, Set

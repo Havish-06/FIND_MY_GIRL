@@ -4,9 +4,6 @@ Friend Recommendation System
 Implement a friend recommendation system for social networks from scratch.
 Uses multiple strategies: common friends, personality similarity, and interest matching.
 Leverages existing implementations from centrality.py, community_detection.py, and traversal.py.
-
-Author: AAD Project Group
-Date: December 2025
 """
 
 from typing import List, Dict, Tuple, Any, Set
@@ -19,18 +16,12 @@ from .centrality import compute_pagerank
 from .community_detection import detect_communities
 from .traversal import find_connected_components_bfs
 
-
-# ==============================================================================
-# 1. BFS FOR SHORTEST PATH (LIGHTWEIGHT VERSION - ONLY USED IF NEEDED)
-# ==============================================================================
+# 1. BFS FOR SHORTEST PATH (LIGHTWEIGHT VERSION - ONLY USED IF NEEDED
 
 # Note: We don't need a separate shortest path function anymore because
 # bfs_find_candidates_within_distance already computes distances during BFS!
 
-
-# ==============================================================================
 # 2. BFS TO FIND ALL CANDIDATES WITHIN MAX DISTANCE
-# ==============================================================================
 
 def bfs_find_candidates_within_distance(graph: Graph, user: Any, max_distance: int = 4) -> Dict[Any, int]:
     """
@@ -75,10 +66,7 @@ def bfs_find_candidates_within_distance(graph: Graph, user: Any, max_distance: i
     
     return candidates
 
-
-# ==============================================================================
-# 3. JACCARD COEFFICIENT FOR STRUCTURAL SIMILARITY (COMMON NEIGHBORS)
-# ==============================================================================
+# 3. JACCARD COEFFICIENT FOR STRUCTURAL SIMILARITY (COMMON NEIGHBORS
 
 def calculate_jaccard_structural(graph: Graph, user1: Any, user2: Any) -> float:
     """
@@ -111,10 +99,7 @@ def calculate_jaccard_structural(graph: Graph, user1: Any, user2: Any) -> float:
     
     return len(intersection) / len(union)
 
-
-# ==============================================================================
-# 4. JACCARD COEFFICIENT FOR INTEREST SIMILARITY (PERSONALITY TAGS)
-# ==============================================================================
+# 4. JACCARD COEFFICIENT FOR INTEREST SIMILARITY (PERSONALITY TAGS
 
 def calculate_jaccard_interests(graph: Graph, user1: Any, user2: Any) -> float:
     """
@@ -155,17 +140,7 @@ def calculate_jaccard_interests(graph: Graph, user1: Any, user2: Any) -> float:
     return len(intersection) / len(union)
 
 
-# ==============================================================================
-# 5. COMMUNITY DETECTION (USE EXISTING IMPLEMENTATION)
-# ==============================================================================
-
-# Note: We use find_connected_components_bfs from traversal.py instead of reimplementing
-# This function is already imported at the top of the file
-
-
-# ==============================================================================
-# 6. CHECK IF TWO USERS BELONG TO SAME COMMUNITY
-# ==============================================================================
+# 5. CHECK IF TWO USERS BELONG TO SAME COMMUNITY
 
 def check_community_match(graph: Graph, user1: Any, user2: Any, 
                          components: List[List[Any]]) -> Tuple[bool, int]:
@@ -190,10 +165,7 @@ def check_community_match(graph: Graph, user1: Any, user2: Any,
     
     return False, 0
 
-
-# ==============================================================================
-# 7. DYNAMIC COMMUNITY BONUS CALCULATION
-# ==============================================================================
+# 6. DYNAMIC COMMUNITY BONUS CALCULATION
 
 def calculate_dynamic_community_bonus(community_size: int) -> float:
     """
@@ -218,10 +190,7 @@ def calculate_dynamic_community_bonus(community_size: int) -> float:
     
     return min(bonus, MAX_BONUS)
 
-
-# ==============================================================================
-# 8. PAGERANK-BASED POPULARITY PENALTY
-# ==============================================================================
+# 7. PAGERANK-BASED POPULARITY PENALT
 
 def calculate_pagerank_penalty(graph: Graph, user: Any, 
                               pagerank_data: Dict[Any, float],
@@ -258,10 +227,7 @@ def calculate_pagerank_penalty(graph: Graph, user: Any,
     
     return 0.0
 
-
-# ==============================================================================
-# 9. LEGACY FUNCTION (KEPT FOR BACKWARDS COMPATIBILITY)
-# ==============================================================================
+# 8. LEGACY FUNCTION (KEPT FOR BACKWARDS COMPATIBILITY
 
 def calculate_comprehensive_score(graph: Graph, 
                                  user: Any, 
@@ -272,12 +238,7 @@ def calculate_comprehensive_score(graph: Graph,
                                  w_attribute: float = 0.4,
                                  max_distance: int = 4,
                                  popularity_penalty_weight: float = 0.3) -> Dict[str, Any]:
-    """
-    
-    **NOTE**: This function is kept for backwards compatibility but is NOT used
-    in the optimized recommend_friends function. The optimized version uses BFS
-    to find candidates within max_distance and then scores them directly.
-    
+    """   
     Algorithm:    Calculate comprehensive recommendation score from scratch.
 
     1. Calculate shortest path distance (reject if > max_distance)
@@ -378,10 +339,7 @@ def calculate_comprehensive_score(graph: Graph,
         'rejected': False
     }
 
-
-# ==============================================================================
-# 10. MAIN RECOMMENDATION FUNCTION
-# ==============================================================================
+# 9. MAIN RECOMMENDATION FUNCTIO
 
 def recommend_friends(graph: Graph, 
                      user: Any, 
@@ -392,10 +350,7 @@ def recommend_friends(graph: Graph,
                      max_distance: int = 4,
                      popularity_penalty: float = 0.3) -> List[Dict[str, Any]]:
     """
-    Recommend friends for a user using comprehensive scoring from scratch.
-    
-    **OPTIMIZED VERSION**: Only evaluates candidates within max_distance hops!
-    
+    Recommend friends for a user using comprehensive scoring from scratch.    
     Algorithm:
     1. Use BFS to find all candidates within max_distance (much faster than checking all nodes!)
     2. Find connected components (communities) using existing traversal.py implementation
@@ -423,7 +378,7 @@ def recommend_friends(graph: Graph,
     Space Complexity: O(V)
     
     **Performance Improvement**: Instead of evaluating ALL nodes (O(V^2)), we only evaluate
-    nodes within max_distance hops, which is typically much smaller!
+    nodes within max_distance hops, which is typically much smaller.
     """
     if user not in graph.get_nodes():
         print(f"Error: User ID {user} not found in graph.")
@@ -519,10 +474,7 @@ def recommend_friends(graph: Graph,
     print(f"    Generated {len(recommendations)} valid recommendations")
     return recommendations[:k]
 
-
-# ==============================================================================
-# 11. USER PROFILE DISPLAY
-# ==============================================================================
+# 11. USER PROFILE DISPLA
 
 def display_user_profile(graph: Graph, user: Any, 
                         pagerank_data: Dict[Any, float] = None,
@@ -579,10 +531,7 @@ def display_user_profile(graph: Graph, user: Any,
     
     print("=" * 60)
 
-
-# ==============================================================================
-# 12. INTERACTIVE RECOMMENDATION SYSTEM
-# ==============================================================================
+# 12. INTERACTIVE RECOMMENDATION SYSTE
 
 def interactive_recommend_friends(graph: Graph, 
                                  pagerank_data: Dict[Any, float] = None):

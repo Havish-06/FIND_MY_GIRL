@@ -4,8 +4,6 @@ Community Detection Algorithms
 Implementation of community detection algorithms from scratch.
 Includes Girvan-Newman and Label Propagation algorithms.
 
-Author: AAD Project Group
-Date: December 2025
 """
 
 from collections import defaultdict, Counter
@@ -376,10 +374,6 @@ def louvain_method(graph, max_iterations: int = 100) -> List[List[Any]]:
     
     Time Complexity: O(m log n) on average - very fast!
     Space Complexity: O(n + m)
-    
-    Reference:
-    Blondel, V. D., et al. (2008). Fast unfolding of communities in large networks.
-    Journal of Statistical Mechanics: Theory and Experiment.
     """
     nodes = list(graph.get_nodes())
     
