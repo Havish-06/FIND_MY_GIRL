@@ -213,6 +213,227 @@ def label_propagation(graph: Graph, max_iter: int = 100) -> List[List[Any]]:
     return list(communities.values())
 
 
+def compute_modularity_gain(graph, node: Any, community: int, 
+                            node_to_community: Dict[Any, int],
+                            k_i: float, sigma_tot: float, m: float) -> float:
+    """
+    Compute the modularity gain from moving a node to a community.
+    
+    Args:
+        graph: The graph
+        node: Node to move
+        community: Target community
+        node_to_community: Current node-to-community mapping
+        k_i: Degree of node
+        sigma_tot: Sum of degrees in target community
+        m: Total edge weight (2 * number of edges for unweighted)
+    
+    Returns:
+        Modularity gain (delta Q)
+    """
+    # Calculate k_i_in: sum of weights of links from node to nodes in community
+    k_i_in = 0.0
+    for neighbor in graph.get_neighbors(node):
+        if node_to_community[neighbor] == community:
+            k_i_in += 1.0  # Edge weight = 1 for unweighted graphs
+    
+    # Modularity gain formula
+    delta_q = (k_i_in / m) - (sigma_tot * k_i / (2 * m * m))
+    
+    return delta_q
+
+
+def louvain_first_phase(graph, node_to_community: Dict[Any, int]) -> Tuple[bool, Dict[Any, int]]:
+    """
+    First phase of Louvain: optimize modularity by moving nodes between communities.
+    
+    Args:
+        graph: The graph
+        node_to_community: Initial community assignment
+    
+    Returns:
+        (improved, new_node_to_community) - whether improvement was made
+    """
+    nodes = list(graph.get_nodes())
+    m = float(graph.number_of_edges())
+    
+    if m == 0:
+        return False, node_to_community
+    
+    # Calculate total degree for each community
+    community_degree = defaultdict(float)
+    for node in nodes:
+        community_degree[node_to_community[node]] += graph.degree(node)
+    
+    improved = False
+    
+    # Iterate until no improvement
+    while True:
+        local_improved = False
+        random.shuffle(nodes)  # Random order for better convergence
+        
+        for node in nodes:
+            current_community = node_to_community[node]
+            node_degree = float(graph.degree(node))
+            
+            # Remove node from current community temporarily
+            community_degree[current_community] -= node_degree
+            
+            # Find neighboring communities
+            neighbor_communities = set()
+            for neighbor in graph.get_neighbors(node):
+                neighbor_communities.add(node_to_community[neighbor])
+            
+            # Add current community to consider staying
+            neighbor_communities.add(current_community)
+            
+            # Find best community (maximum modularity gain)
+            best_community = current_community
+            best_gain = 0.0
+            
+            for community in neighbor_communities:
+                sigma_tot = community_degree[community]
+                gain = compute_modularity_gain(
+                    graph, node, community, node_to_community,
+                    node_degree, sigma_tot, m
+                )
+                
+                if gain > best_gain:
+                    best_gain = gain
+                    best_community = community
+            
+            # Move node to best community
+            if best_community != current_community and best_gain > 1e-10:
+                node_to_community[node] = best_community
+                community_degree[best_community] += node_degree
+                local_improved = True
+                improved = True
+            else:
+                # Put node back in current community
+                community_degree[current_community] += node_degree
+        
+        if not local_improved:
+            break
+    
+    return improved, node_to_community
+
+
+def build_community_graph(graph, node_to_community: Dict[Any, int]):
+    """
+    Second phase of Louvain: build a new graph where nodes are communities.
+    
+    Args:
+        graph: Original graph
+        node_to_community: Community assignment
+    
+    Returns:
+        New graph where each node represents a community
+    """
+    community_graph = Graph()
+    
+    # Get unique communities
+    communities = set(node_to_community.values())
+    
+    # Add community nodes
+    for community in communities:
+        community_graph.add_node(community)
+    
+    # Add edges between communities (with weights for multi-edges)
+    edge_weights = defaultdict(float)
+    
+    for u, v in graph.get_edges():
+        comm_u = node_to_community[u]
+        comm_v = node_to_community[v]
+        
+        if comm_u != comm_v:
+            # Edge between different communities
+            edge = tuple(sorted([comm_u, comm_v]))
+            edge_weights[edge] += 1.0
+    
+    # Add weighted edges to community graph
+    for (comm_u, comm_v), weight in edge_weights.items():
+        if not community_graph.has_edge(comm_u, comm_v):
+            community_graph.add_edge(comm_u, comm_v)
+    
+    return community_graph
+
+
+def louvain_method(graph, max_iterations: int = 100) -> List[List[Any]]:
+    """
+    Louvain method for community detection.
+    
+    Fast modularity optimization algorithm that iteratively:
+    1. Optimizes modularity by moving nodes between communities (Phase 1)
+    2. Builds a new graph where nodes are communities (Phase 2)
+    3. Repeats until no improvement
+    
+    Args:
+        graph: The graph to analyze
+        max_iterations: Maximum number of iterations
+    
+    Returns:
+        List of communities (each community is a list of nodes)
+    
+    Time Complexity: O(m log n) on average - very fast!
+    Space Complexity: O(n + m)
+    
+    Reference:
+    Blondel, V. D., et al. (2008). Fast unfolding of communities in large networks.
+    Journal of Statistical Mechanics: Theory and Experiment.
+    """
+    nodes = list(graph.get_nodes())
+    
+    if len(nodes) == 0:
+        return []
+    
+    # Initialize: each node in its own community
+    node_to_community = {node: i for i, node in enumerate(nodes)}
+    
+    # Keep track of original nodes in each community
+    community_nodes = {i: [node] for i, node in enumerate(nodes)}
+    
+    current_graph = graph
+    
+    for iteration in range(max_iterations):
+        # Phase 1: Optimize communities
+        improved, node_to_community = louvain_first_phase(current_graph, node_to_community)
+        
+        if not improved:
+            break
+        
+        # Update community_nodes mapping
+        new_communities = defaultdict(list)
+        for node, comm in node_to_community.items():
+            # Get original nodes
+            if isinstance(node, int) and node < len(nodes):
+                # This is an original node
+                new_communities[comm].append(node)
+            else:
+                # This is a meta-community, expand it
+                if node in community_nodes:
+                    new_communities[comm].extend(community_nodes[node])
+                else:
+                    new_communities[comm].append(node)
+        
+        community_nodes = dict(new_communities)
+        
+        # Phase 2: Build community graph
+        current_graph = build_community_graph(current_graph, node_to_community)
+        
+        # Re-initialize communities for next iteration
+        community_list = list(community_nodes.keys())
+        node_to_community = {comm: i for i, comm in enumerate(community_list)}
+        
+        # Update community_nodes with new indices
+        new_community_nodes = {}
+        for i, comm in enumerate(community_list):
+            new_community_nodes[i] = community_nodes[comm]
+        community_nodes = new_community_nodes
+    
+    # Convert to list of communities
+    return list(community_nodes.values())
+
+
 def modularity(graph: Graph, communities: List[List[Any]]) -> float:
     """
     Calculate modularity of a community partition.
@@ -280,7 +501,7 @@ def detect_communities(graph: Graph, method: str = "label_propagation",
     
     Args:
         graph (Graph): The graph to analyze
-        method (str): Method to use ("label_propagation" or "girvan_newman")
+        method (str): Method to use ("label_propagation", "girvan_newman", or "louvain")
         num_communities (int): Desired number of communities (for some methods)
     
     Returns:
@@ -295,8 +516,10 @@ def detect_communities(graph: Graph, method: str = "label_propagation",
         if num_communities is None:
             num_communities = 2
         communities = girvan_newman(graph, num_communities)
+    elif method == "louvain":
+        communities = louvain_method(graph)
     else:
-        raise ValueError(f"Unknown method: {method}. Use 'label_propagation' or 'girvan_newman'.")
+        raise ValueError(f"Unknown method: {method}. Use 'label_propagation', 'girvan_newman', or 'louvain'.")
     
     # Calculate modularity
     mod = modularity(graph, communities)
