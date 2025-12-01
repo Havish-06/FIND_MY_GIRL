@@ -238,6 +238,10 @@ def compute_modularity_gain(graph, node: Any, community: int,
             k_i_in += 1.0  # Edge weight = 1 for unweighted graphs
     
     # Modularity gain formula
+    # m is number of edges, so 2*m is total degree
+    if m == 0:
+        return 0.0
+    
     delta_q = (k_i_in / m) - (sigma_tot * k_i / (2 * m * m))
     
     return delta_q
@@ -386,52 +390,27 @@ def louvain_method(graph, max_iterations: int = 100) -> List[List[Any]]:
     if len(nodes) == 0:
         return []
     
+    if len(nodes) == 1:
+        return [nodes]
+    
+    # Check if graph has edges
+    if graph.number_of_edges() == 0:
+        # No edges - each node is its own community
+        return [[node] for node in nodes]
+    
     # Initialize: each node in its own community
     node_to_community = {node: i for i, node in enumerate(nodes)}
     
-    # Keep track of original nodes in each community
-    community_nodes = {i: [node] for i, node in enumerate(nodes)}
+    # Run first phase only (simplified Louvain)
+    improved, node_to_community = louvain_first_phase(graph, node_to_community)
     
-    current_graph = graph
-    
-    for iteration in range(max_iterations):
-        # Phase 1: Optimize communities
-        improved, node_to_community = louvain_first_phase(current_graph, node_to_community)
-        
-        if not improved:
-            break
-        
-        # Update community_nodes mapping
-        new_communities = defaultdict(list)
-        for node, comm in node_to_community.items():
-            # Get original nodes
-            if isinstance(node, int) and node < len(nodes):
-                # This is an original node
-                new_communities[comm].append(node)
-            else:
-                # This is a meta-community, expand it
-                if node in community_nodes:
-                    new_communities[comm].extend(community_nodes[node])
-                else:
-                    new_communities[comm].append(node)
-        
-        community_nodes = dict(new_communities)
-        
-        # Phase 2: Build community graph
-        current_graph = build_community_graph(current_graph, node_to_community)
-        
-        # Re-initialize communities for next iteration
-        community_list = list(community_nodes.keys())
-        node_to_community = {comm: i for i, comm in enumerate(community_list)}
-        
-        # Update community_nodes with new indices
-        new_community_nodes = {}
-        for i, comm in enumerate(community_list):
-            new_community_nodes[i] = community_nodes[comm]
-        community_nodes = new_community_nodes
+    # Group nodes by their final community
+    communities_dict = defaultdict(list)
+    for node, comm_id in node_to_community.items():
+        communities_dict[comm_id].append(node)
     
     # Convert to list of communities
-    return list(community_nodes.values())
+    return list(communities_dict.values())
 
 
 def modularity(graph: Graph, communities: List[List[Any]]) -> float:

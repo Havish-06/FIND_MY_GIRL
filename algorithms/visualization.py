@@ -191,7 +191,7 @@ def visualize_graph(graph: Graph,
                    title: str = "Social Network Graph",
                    filename: str = None,
                    show: bool = True,
-                   figsize: Tuple[int, int] = (40, 40)):
+                   figsize: Tuple[int, int] = (10, 8)):
     """
     Visualize a graph using matplotlib.
     
@@ -228,11 +228,11 @@ def visualize_graph(graph: Graph,
     # Create figure
     fig, ax = plt.subplots(figsize=figsize)
     
-    # Draw edges - thinner for large graphs
+    # Draw edges - visible and clear
     for u, v in graph.get_edges():
         x1, y1 = positions[u]
         x2, y2 = positions[v]
-        ax.plot([x1, x2], [y1, y2], 'gray', linewidth=0.2, alpha=0.3, zorder=1)
+        ax.plot([x1, x2], [y1, y2], 'gray', linewidth=1.0, alpha=0.6, zorder=1)
     
     # Draw nodes - scale size based on number of nodes
     x_coords = [positions[node][0] for node in nodes]
@@ -241,8 +241,8 @@ def visualize_graph(graph: Graph,
     if node_colors is None:
         node_colors = ['skyblue'] * len(nodes)
     
-    # Dynamic node size: smaller for larger graphs
-    node_size = max(50, min(300, 10000 / len(nodes)))
+    # Dynamic node size: larger for better visibility
+    node_size = max(100, min(500, 15000 / len(nodes)))
     
     ax.scatter(x_coords, y_coords, c=node_colors, s=node_size, alpha=0.8, 
               edgecolors='black', linewidths=0.5, zorder=2)
@@ -251,8 +251,8 @@ def visualize_graph(graph: Graph,
     if node_labels is None:
         node_labels = {node: str(node) for node in nodes}
     
-    # Dynamic font size
-    font_size = max(4, min(8, 100 / math.sqrt(len(nodes))))
+    # Dynamic font size - larger for readability
+    font_size = max(6, min(10, 150 / math.sqrt(len(nodes))))
     
     for node in nodes:
         x, y = positions[node]
@@ -266,9 +266,8 @@ def visualize_graph(graph: Graph,
     plt.tight_layout()
     
     if filename:
-        # Save at ultra-high DPI for zooming capability
-        plt.savefig(filename, dpi=600, bbox_inches='tight')
-        print(f"Graph saved to {filename} (high-res, zoomable)")
+        plt.savefig(filename, dpi=150, bbox_inches='tight')
+        print(f"Graph saved to {filename}")
     
     if show:
         plt.show()
@@ -280,7 +279,7 @@ def visualize_communities(graph: Graph, communities: List[List[Any]],
                          title: str = "Community Detection",
                          filename: str = None,
                          show: bool = True,
-                         figsize: Tuple[int, int] = (40, 40)):
+                         figsize: Tuple[int, int] = (10, 8)):
     """
     Visualize graph with communities highlighted in different colors.
     
@@ -331,7 +330,7 @@ def visualize_centrality(graph: Graph, centrality: Dict[Any, float],
                         centrality_name: str = "Centrality",
                         filename: str = None,
                         show: bool = True,
-                        figsize: Tuple[int, int] = (40, 40)):
+                        figsize: Tuple[int, int] = (10, 8)):
     """
     Visualize graph with node sizes based on centrality scores.
     
@@ -374,15 +373,15 @@ def visualize_centrality(graph: Graph, centrality: Dict[Any, float],
     # Create figure
     fig, ax = plt.subplots(figsize=figsize)
     
-    # Draw edges - thinner for large graphs
+    # Draw edges - visible and clear
     for u, v in graph.get_edges():
         x1, y1 = positions[u]
         x2, y2 = positions[v]
-        ax.plot([x1, x2], [y1, y2], 'gray', linewidth=0.2, alpha=0.2, zorder=1)
+        ax.plot([x1, x2], [y1, y2], 'gray', linewidth=1.0, alpha=0.6, zorder=1)
     
-    # Dynamic sizing
-    node_size_base = max(50, min(300, 10000 / len(nodes)))
-    font_size = max(4, min(8, 100 / math.sqrt(len(nodes))))
+    # Dynamic sizing - larger for better visibility
+    node_size_base = max(100, min(500, 15000 / len(nodes)))
+    font_size = max(6, min(10, 150 / math.sqrt(len(nodes))))
     
     # Draw nodes with sizes based on centrality
     for node in nodes:
@@ -411,7 +410,7 @@ def visualize_centrality(graph: Graph, centrality: Dict[Any, float],
     plt.tight_layout()
     
     if filename:
-        plt.savefig(filename, dpi=600, bbox_inches='tight')
+        plt.savefig(filename, dpi=150, bbox_inches='tight')
         print(f"Visualization saved to {filename} (high-res, zoomable)")
     
     if show:

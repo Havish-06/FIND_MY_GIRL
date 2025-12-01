@@ -168,7 +168,8 @@ def analyze_communities(graph: Graph):
     
     methods = [
         ("label_propagation", "Label Propagation"),
-        ("girvan_newman", "Girvan-Newman")
+        ("girvan_newman", "Girvan-Newman"),
+        ("louvain", "Louvain Method")
     ]
     
     results = {}
@@ -335,8 +336,8 @@ def main():
     print("=" * 70)
     
     # Configuration
-    NUM_USERS = 500
-    AVG_FRIENDS = 8
+    NUM_USERS = 50
+    AVG_FRIENDS = 6
     NUM_COMMUNITIES = None  # Auto-calculated based on network size
     
     print(f"\n[Configuration]")
