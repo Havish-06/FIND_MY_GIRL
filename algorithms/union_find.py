@@ -9,7 +9,7 @@ Date: December 2025
 """
 
 from typing import Any, Dict, List, Set
-from graph import Graph
+from .graph import Graph
 
 
 class UnionFind:

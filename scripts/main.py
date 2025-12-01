@@ -19,15 +19,15 @@ import time
 from typing import Dict, List, Any
 
 # Import our custom modules
-from graph import Graph
-from graph_generator import (
+from algorithms.graph import Graph
+from algorithms.graph_generator import (
     generate_social_network, 
     generate_small_world_network,
     generate_scale_free_network
 )#havish
 
 
-from traversal import (
+from algorithms.traversal import (
     bfs, dfs,
     find_connected_components_bfs,
     find_connected_components_dfs,
@@ -36,32 +36,30 @@ from traversal import (
 )#sashank
 
 
-from union_find import (
+from algorithms.union_find import (
     find_connected_components_union_find,
     detect_cycle_union_find
 )#anish
 
 
-from centrality import (
+from algorithms.centrality import (
     compute_all_centralities,
     get_top_k_central_nodes
 )#havish
 
-from community_detection import (
+from algorithms.community_detection import (
     detect_communities,
     modularity
 )#anish
 
 
-from recommender import (
-    recommend_friends,
-    friends_of_friends,
-    evaluate_recommendations
+from algorithms.recommender import (
+    recommend_friends
 )#abhinav 
 
 
 
-from visualization import (
+from algorithms.visualization import (
     visualize_graph,
     visualize_communities,
     visualize_centrality,
@@ -170,8 +168,7 @@ def analyze_communities(graph: Graph):
     
     methods = [
         ("label_propagation", "Label Propagation"),
-        ("girvan_newman", "Girvan-Newman"),
-        ("greedy_modularity", "Greedy Modularity")
+        ("girvan_newman", "Girvan-Newman")
     ]
     
     results = {}
@@ -253,16 +250,15 @@ def analyze_recommendations(graph: Graph, sample_users: int = 5):
         
         if recommendations:
             print(f"    Top 5 Friend Recommendations:")
-            for rank, (rec_user, score) in enumerate(recommendations, 1):
+            for rank, rec_dict in enumerate(recommendations, 1):
+                rec_user = rec_dict['user_id']
+                score = rec_dict['final_score']
                 rec_name = graph.get_node_attribute(rec_user, "name", f"User{rec_user}")
                 rec_interests = graph.get_node_attribute(rec_user, "interests", [])
-                
-                # Calculate common friends
-                from recommender import get_common_friends
-                common = get_common_friends(graph, user, rec_user)
+                common_friends_count = rec_dict.get('common_friends_count', 0)
                 
                 print(f"      {rank}. {rec_name} (ID: {rec_user}) - "
-                      f"Score: {score:.3f} - Common friends: {len(common)}")
+                      f"Score: {score:.3f} - Common friends: {common_friends_count}")
         else:
             print(f"    No recommendations available")
         
@@ -339,14 +335,14 @@ def main():
     print("=" * 70)
     
     # Configuration
-    NUM_USERS = 100
-    AVG_FRIENDS = 15
-    NUM_COMMUNITIES = 4
+    NUM_USERS = 500
+    AVG_FRIENDS = 8
+    NUM_COMMUNITIES = None  # Auto-calculated based on network size
     
     print(f"\n[Configuration]")
     print(f"  Network size: {NUM_USERS} users")
     print(f"  Average friends: {AVG_FRIENDS}")
-    print(f"  Communities: {NUM_COMMUNITIES}")
+    print(f"  Communities: Auto-calculated")
     
     # Generate social network
     print_section_header("NETWORK GENERATION")
@@ -380,30 +376,41 @@ def main():
         # Visualize the graph
         print("    - Creating network visualization...")
         visualize_graph(graph, title="Social Network", 
-                       filename="social_network.png", show=False)
+                       filename="outputs/social_network.png", show=False)
         
         # Visualize communities
         if community_result:
             print("    - Creating community visualization...")
             visualize_communities(graph, community_result["communities"],
                                 title="Community Structure",
-                                filename="communities.png", show=False)
+                                filename="outputs/communities.png", show=False)
         
         # Visualize PageRank
         if centralities:
             print("    - Creating PageRank visualization...")
             visualize_centrality(graph, centralities["pagerank"],
                                centrality_name="PageRank",
-                               filename="pagerank.png", show=False)
+                               filename="outputs/pagerank.png", show=False)
         
         # Plot degree distribution
         print("    - Creating degree distribution plot...")
-        plot_degree_distribution(graph, filename="degree_distribution.png", show=False)
+        plot_degree_distribution(graph, filename="outputs/degree_distribution.png", show=False)
         
         print("\n    All visualizations saved successfully!")
         
     except Exception as e:
         print(f"\n    Visualization skipped (install matplotlib): {e}")
+    
+    # Save graph to file for test_recommender.py
+    print_section_header("SAVING GRAPH")
+    try:
+        import pickle
+        with open('data/generated_graph.pkl', 'wb') as f:
+            pickle.dump(graph, f)
+        print("\n  ✓ Graph saved to 'data/generated_graph.pkl'")
+        print("  ✓ Use test_recommender.py to test recommendations on this graph")
+    except Exception as e:
+        print(f"\n  ✗ Failed to save graph: {e}")
     
     # Final summary
     print_section_header("ANALYSIS COMPLETE")
@@ -415,7 +422,8 @@ def main():
 
 if __name__ == "__main__":
     # Set random seed for reproducibility
-    random.seed(42)
+    #random.seed(42)
     
     # Run main analysis
     main()
+

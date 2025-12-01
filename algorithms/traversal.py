@@ -10,7 +10,7 @@ Date: December 2025
 
 from collections import deque
 from typing import List, Set, Dict, Any
-from graph import Graph
+from .graph import Graph
 
 
 def bfs(graph: Graph, start_node: Any) -> List[Any]:

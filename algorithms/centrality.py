@@ -10,7 +10,7 @@ Date: December 2025
 
 from collections import defaultdict, deque
 from typing import Dict, Any, List
-from graph import Graph
+from .graph import Graph
 
 
 def compute_degree_centrality(graph: Graph) -> Dict[Any, float]:

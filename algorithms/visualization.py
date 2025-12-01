@@ -11,11 +11,11 @@ Date: December 2025
 import math
 import random
 from typing import List, Dict, Any, Tuple
-from graph import Graph
+from .graph import Graph
 
 
 def force_directed_layout(graph: Graph, iterations: int = 50, 
-                         k: float = None) -> Dict[Any, Tuple[float, float]]:
+                         k: float = None, seed: int = None) -> Dict[Any, Tuple[float, float]]:
     """
     Compute force-directed layout for graph visualization using Fruchterman-Reingold algorithm.
     
@@ -30,6 +30,7 @@ def force_directed_layout(graph: Graph, iterations: int = 50,
         graph (Graph): The graph to layout
         iterations (int): Number of iterations
         k (float): Optimal distance between nodes
+        seed (int): Random seed for reproducible layouts
     
     Returns:
         Dictionary mapping nodes to (x, y) positions
@@ -43,17 +44,21 @@ def force_directed_layout(graph: Graph, iterations: int = 50,
     if n == 0:
         return {}
     
-    # Set optimal distance
-    if k is None:
-        k = math.sqrt(1.0 / n)
+    # Set random seed for reproducible layouts
+    if seed is not None:
+        random.seed(seed)
     
-    # Initialize positions randomly
+    # Set optimal distance - ULTRA MAXIMIZED for extreme node separation
+    if k is None:
+        k = math.sqrt(50.0 / n)  # Increased to 50.0 for ultra clarity
+    
+    # Initialize positions randomly - ULTRA LARGE AREA
     positions = {}
     for node in nodes:
-        positions[node] = (random.uniform(0, 1), random.uniform(0, 1))
+        positions[node] = (random.uniform(0, 20), random.uniform(0, 20))  # Increased to (0,20) for ultra separation
     
-    # Initial temperature
-    temperature = 0.1
+    # Initial temperature - ULTRA MAXIMIZED
+    temperature = 5.0  # Increased to 5.0 for ultra maximum spreading force
     
     for iteration in range(iterations):
         # Calculate forces
@@ -186,7 +191,7 @@ def visualize_graph(graph: Graph,
                    title: str = "Social Network Graph",
                    filename: str = None,
                    show: bool = True,
-                   figsize: Tuple[int, int] = (12, 8)):
+                   figsize: Tuple[int, int] = (40, 40)):
     """
     Visualize a graph using matplotlib.
     
@@ -218,35 +223,41 @@ def visualize_graph(graph: Graph,
     
     # Compute layout if not provided
     if positions is None:
-        positions = force_directed_layout(graph)
+        positions = force_directed_layout(graph, seed=42)
     
     # Create figure
     fig, ax = plt.subplots(figsize=figsize)
     
-    # Draw edges
+    # Draw edges - thinner for large graphs
     for u, v in graph.get_edges():
         x1, y1 = positions[u]
         x2, y2 = positions[v]
-        ax.plot([x1, x2], [y1, y2], 'gray', linewidth=0.5, alpha=0.5, zorder=1)
+        ax.plot([x1, x2], [y1, y2], 'gray', linewidth=0.2, alpha=0.3, zorder=1)
     
-    # Draw nodes
+    # Draw nodes - scale size based on number of nodes
     x_coords = [positions[node][0] for node in nodes]
     y_coords = [positions[node][1] for node in nodes]
     
     if node_colors is None:
         node_colors = ['skyblue'] * len(nodes)
     
-    ax.scatter(x_coords, y_coords, c=node_colors, s=300, alpha=0.7, 
-              edgecolors='black', linewidths=1.5, zorder=2)
+    # Dynamic node size: smaller for larger graphs
+    node_size = max(50, min(300, 10000 / len(nodes)))
     
-    # Draw labels
+    ax.scatter(x_coords, y_coords, c=node_colors, s=node_size, alpha=0.8, 
+              edgecolors='black', linewidths=0.5, zorder=2)
+    
+    # Draw labels - smaller font for large graphs
     if node_labels is None:
         node_labels = {node: str(node) for node in nodes}
+    
+    # Dynamic font size
+    font_size = max(4, min(8, 100 / math.sqrt(len(nodes))))
     
     for node in nodes:
         x, y = positions[node]
         label = node_labels.get(node, str(node))
-        ax.text(x, y, label, fontsize=8, ha='center', va='center', zorder=3)
+        ax.text(x, y, label, fontsize=font_size, ha='center', va='center', zorder=3)
     
     ax.set_title(title, fontsize=16, fontweight='bold')
     ax.axis('off')
@@ -255,8 +266,9 @@ def visualize_graph(graph: Graph,
     plt.tight_layout()
     
     if filename:
-        plt.savefig(filename, dpi=300, bbox_inches='tight')
-        print(f"Graph saved to {filename}")
+        # Save at ultra-high DPI for zooming capability
+        plt.savefig(filename, dpi=600, bbox_inches='tight')
+        print(f"Graph saved to {filename} (high-res, zoomable)")
     
     if show:
         plt.show()
@@ -268,7 +280,7 @@ def visualize_communities(graph: Graph, communities: List[List[Any]],
                          title: str = "Community Detection",
                          filename: str = None,
                          show: bool = True,
-                         figsize: Tuple[int, int] = (12, 8)):
+                         figsize: Tuple[int, int] = (40, 40)):
     """
     Visualize graph with communities highlighted in different colors.
     
@@ -307,7 +319,7 @@ def visualize_communities(graph: Graph, communities: List[List[Any]],
         node_colors.append(color)
     
     # Compute layout
-    positions = force_directed_layout(graph)
+    positions = force_directed_layout(graph, seed=42)
     
     # Visualize
     visualize_graph(graph, positions, node_colors=node_colors, 
@@ -319,7 +331,7 @@ def visualize_centrality(graph: Graph, centrality: Dict[Any, float],
                         centrality_name: str = "Centrality",
                         filename: str = None,
                         show: bool = True,
-                        figsize: Tuple[int, int] = (12, 8)):
+                        figsize: Tuple[int, int] = (40, 40)):
     """
     Visualize graph with node sizes based on centrality scores.
     
@@ -347,7 +359,7 @@ def visualize_centrality(graph: Graph, centrality: Dict[Any, float],
         return
     
     # Compute layout
-    positions = force_directed_layout(graph)
+    positions = force_directed_layout(graph, seed=42)
     
     # Normalize centrality for visualization
     max_centrality = max(centrality.values()) if centrality.values() else 1
@@ -362,24 +374,28 @@ def visualize_centrality(graph: Graph, centrality: Dict[Any, float],
     # Create figure
     fig, ax = plt.subplots(figsize=figsize)
     
-    # Draw edges
+    # Draw edges - thinner for large graphs
     for u, v in graph.get_edges():
         x1, y1 = positions[u]
         x2, y2 = positions[v]
-        ax.plot([x1, x2], [y1, y2], 'gray', linewidth=0.5, alpha=0.3, zorder=1)
+        ax.plot([x1, x2], [y1, y2], 'gray', linewidth=0.2, alpha=0.2, zorder=1)
+    
+    # Dynamic sizing
+    node_size_base = max(50, min(300, 10000 / len(nodes)))
+    font_size = max(4, min(8, 100 / math.sqrt(len(nodes))))
     
     # Draw nodes with sizes based on centrality
     for node in nodes:
         x, y = positions[node]
-        size = 100 + normalized[node] * 500  # Size from 100 to 600
+        size = node_size_base + normalized[node] * node_size_base * 3  # 1x to 4x size range
         color_value = normalized[node]
         color = cm.Reds(0.3 + color_value * 0.7)  # Color from light to dark red
         
-        ax.scatter([x], [y], s=size, c=[color], alpha=0.7,
-                  edgecolors='black', linewidths=1.5, zorder=2)
+        ax.scatter([x], [y], s=size, c=[color], alpha=0.8,
+                  edgecolors='black', linewidths=0.5, zorder=2)
         
         # Label
-        ax.text(x, y, str(node), fontsize=8, ha='center', va='center', zorder=3)
+        ax.text(x, y, str(node), fontsize=font_size, ha='center', va='center', zorder=3)
     
     ax.set_title(f"{centrality_name} Visualization", fontsize=16, fontweight='bold')
     ax.axis('off')
@@ -395,8 +411,8 @@ def visualize_centrality(graph: Graph, centrality: Dict[Any, float],
     plt.tight_layout()
     
     if filename:
-        plt.savefig(filename, dpi=300, bbox_inches='tight')
-        print(f"Visualization saved to {filename}")
+        plt.savefig(filename, dpi=600, bbox_inches='tight')
+        print(f"Visualization saved to {filename} (high-res, zoomable)")
     
     if show:
         plt.show()

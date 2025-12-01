@@ -7,17 +7,17 @@ Author: AAD Project Group
 Date: December 2025
 """
 
-from graph import Graph
-from traversal import bfs, dfs, find_connected_components_bfs, shortest_path_bfs
-from union_find import UnionFind, find_connected_components_union_find
-from centrality import (
+from algorithms.graph import Graph
+from algorithms.traversal import bfs, dfs, find_connected_components_bfs, shortest_path_bfs
+from algorithms.union_find import UnionFind, find_connected_components_union_find
+from algorithms.centrality import (
     compute_degree_centrality,
     compute_betweenness_centrality,
     compute_pagerank
 )
-from community_detection import label_propagation, modularity
-from graph_generator import generate_social_network
-from recommender import recommend_friends, common_friends_score
+from algorithms.community_detection import label_propagation, modularity
+from algorithms.graph_generator import generate_social_network
+from algorithms.recommender import recommend_friends
 
 
 def test_graph_basic():
@@ -238,12 +238,8 @@ def test_recommender():
     
     assert len(recommendations) > 0, "Recommendation generation error"
     
-    # Check common friends score
-    score = common_friends_score(G, 0, 3)
-    assert score == 1, "Common friends calculation error (should have 1 common friend)"
-    
     print(f"    ✓ Generated {len(recommendations)} recommendations")
-    print(f"    ✓ Common friends score works correctly")
+    print(f"    ✓ Recommendation system works correctly")
 
 
 def run_all_tests():

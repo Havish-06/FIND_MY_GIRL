@@ -1,4 +1,4 @@
-    """
+"""
 Comprehensive Benchmarking Suite with Scalability Analysis
 ===========================================================
 Tests all algorithms across multiple network sizes and generates performance plots.
@@ -15,25 +15,24 @@ from typing import Dict, List, Tuple, Callable
 import random
 
 # Import our modules
-from graph import Graph
-from graph_generator import generate_social_network
-from traversal import (
+from algorithms.graph import Graph
+from algorithms.graph_generator import generate_social_network
+from algorithms.traversal import (
     find_connected_components_bfs,
     find_connected_components_dfs,
     shortest_path_bfs
 )
-from union_find import find_connected_components_union_find
-from centrality import (
+from algorithms.union_find import find_connected_components_union_find
+from algorithms.centrality import (
     compute_degree_centrality,
     compute_betweenness_centrality,
     compute_closeness_centrality,
     compute_pagerank,
     compute_eigenvector_centrality
 )
-from community_detection import (
+from algorithms.community_detection import (
     label_propagation,
-    girvan_newman,
-    greedy_modularity_communities
+    girvan_newman
 )
 
 
@@ -203,8 +202,7 @@ def benchmark_community_detection(graphs: Dict[int, Graph]) -> Dict[str, Benchma
     
     results = {
         'Label Propagation': BenchmarkResult('Label Propagation'),
-        'Girvan-Newman': BenchmarkResult('Girvan-Newman'),
-        'Greedy Modularity': BenchmarkResult('Greedy Modularity')
+        'Girvan-Newman': BenchmarkResult('Girvan-Newman')
     }
     
     for size, graph in sorted(graphs.items()):
@@ -221,12 +219,6 @@ def benchmark_community_detection(graphs: Dict[int, Graph]) -> Dict[str, Benchma
             exec_time, memory, _ = benchmark_function(girvan_newman, graph, num_communities)
             results['Girvan-Newman'].add_result(size, exec_time, memory)
             print(f"  Girvan-Newman: {exec_time:.6f}s, {memory:.2f}MB")
-        
-        # Greedy Modularity (extremely slow, skip after 50 nodes)
-        if size <= 50:
-            exec_time, memory, _ = benchmark_function(greedy_modularity_communities, graph)
-            results['Greedy Modularity'].add_result(size, exec_time, memory)
-            print(f"  Greedy Mod.: {exec_time:.6f}s, {memory:.2f}MB (SLOW!)")
     
     return results
 
@@ -389,19 +381,19 @@ def main():
     cc_results = benchmark_connected_components(graphs)
     all_results['Connected Components'] = cc_results
     plot_scalability(cc_results, 'Connected Components Detection', 
-                    'benchmark_connected_components.png')
+                    'outputs/benchmark_connected_components.png')
     
     # 2. Centrality Measures
     cent_results = benchmark_centrality_measures(graphs)
     all_results['Centrality Measures'] = cent_results
     plot_scalability(cent_results, 'Centrality Measures', 
-                    'benchmark_centrality.png', log_scale=True)
+                    'outputs/benchmark_centrality.png', log_scale=True)
     
     # 3. Community Detection
     comm_results = benchmark_community_detection(graphs)
     all_results['Community Detection'] = comm_results
     plot_scalability(comm_results, 'Community Detection', 
-                    'benchmark_community_detection.png')
+                    'outputs/benchmark_community_detection.png')
     
     # Generate reports
     generate_complexity_report(all_results)

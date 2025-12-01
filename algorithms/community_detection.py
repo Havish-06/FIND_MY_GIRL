@@ -11,9 +11,9 @@ Date: December 2025
 from collections import defaultdict, Counter
 import random
 from typing import List, Set, Dict, Any, Tuple
-from graph import Graph
-from traversal import find_connected_components_bfs
-from centrality import compute_betweenness_centrality
+from .graph import Graph
+from .traversal import find_connected_components_bfs
+from .centrality import compute_betweenness_centrality
 
 
 def girvan_newman(graph: Graph, num_communities: int = 2) -> List[List[Any]]:
@@ -273,74 +273,6 @@ def modularity(graph: Graph, communities: List[List[Any]]) -> float:
     return Q
 
 
-def greedy_modularity_communities(graph: Graph, max_communities: int = None) -> List[List[Any]]:
-    """
-    Greedy modularity maximization for community detection.
-    
-    Algorithm (Clauset-Newman-Moore):
-    1. Start with each node in its own community
-    2. Repeatedly merge communities that increase modularity the most
-    3. Stop when modularity stops increasing or max_communities is reached
-    
-    Args:
-        graph (Graph): The graph to analyze
-        max_communities (int): Maximum number of communities (None for auto)
-    
-    Returns:
-        List of communities
-    
-    Time Complexity: O(n^2 * log n) where n is vertices
-    Space Complexity: O(n^2)
-    """
-    nodes = graph.get_nodes()
-    
-    # Start with each node in its own community
-    communities = [[node] for node in nodes]
-    
-    # Create node to community mapping
-    node_to_comm = {node: i for i, node in enumerate(nodes)}
-    
-    best_modularity = modularity(graph, communities)
-    
-    while len(communities) > 1:
-        if max_communities and len(communities) <= max_communities:
-            break
-        
-        best_merge = None
-        best_delta_q = -float('inf')
-        
-        # Try all pairs of communities
-        for i in range(len(communities)):
-            for j in range(i + 1, len(communities)):
-                # Merge communities i and j
-                merged = communities[:i] + communities[i+1:j] + communities[j+1:]
-                merged.append(communities[i] + communities[j])
-                
-                # Calculate modularity change
-                new_q = modularity(graph, merged)
-                delta_q = new_q - best_modularity
-                
-                if delta_q > best_delta_q:
-                    best_delta_q = delta_q
-                    best_merge = (i, j)
-        
-        # If no improvement, stop
-        if best_delta_q <= 0:
-            break
-        
-        # Perform best merge
-        i, j = best_merge
-        merged_community = communities[i] + communities[j]
-        
-        # Remove old communities and add merged one
-        communities = [communities[k] for k in range(len(communities)) if k not in [i, j]]
-        communities.append(merged_community)
-        
-        best_modularity += best_delta_q
-    
-    return communities
-
-
 def detect_communities(graph: Graph, method: str = "label_propagation", 
                        num_communities: int = None) -> Dict[str, Any]:
     """
@@ -348,7 +280,7 @@ def detect_communities(graph: Graph, method: str = "label_propagation",
     
     Args:
         graph (Graph): The graph to analyze
-        method (str): Method to use ("label_propagation", "girvan_newman", "greedy_modularity")
+        method (str): Method to use ("label_propagation" or "girvan_newman")
         num_communities (int): Desired number of communities (for some methods)
     
     Returns:
@@ -363,10 +295,8 @@ def detect_communities(graph: Graph, method: str = "label_propagation",
         if num_communities is None:
             num_communities = 2
         communities = girvan_newman(graph, num_communities)
-    elif method == "greedy_modularity":
-        communities = greedy_modularity_communities(graph, num_communities)
     else:
-        raise ValueError(f"Unknown method: {method}")
+        raise ValueError(f"Unknown method: {method}. Use 'label_propagation' or 'girvan_newman'.")
     
     # Calculate modularity
     mod = modularity(graph, communities)
